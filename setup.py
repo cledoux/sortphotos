@@ -16,6 +16,6 @@ setup(
           'sortphotos = src.sortphotos:main',
         ]
       },
-    scripts=['scripts/sortpics',],
+    scripts=['scripts/importpics',],
 )
 
