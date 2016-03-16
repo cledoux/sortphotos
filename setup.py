@@ -15,6 +15,7 @@ setup(
         'console_scripts': [
           'sortphotos = src.sortphotos:main',
         ]
-      }
+      },
+    scripts=['scripts/sortpics',],
 )
 
