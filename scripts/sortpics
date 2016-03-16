@@ -1,8 +1,0 @@
-#!/bin/bash
-# Simple wrapper to call sortphotos with my prefered default options.
-
-# Standard safety options
-set -euf -o pipefail
-IFS=$'\n\t'
-
-sortphotos --sort %Y/%Y-%m --rename %Y-%m-%d $@

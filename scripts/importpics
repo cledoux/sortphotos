@@ -1,0 +1,10 @@
+#!/bin/bash
+# Simple wrapper to call sortphotos with my prefered default options.
+# I typically use this wrapper for importing from a camera. This script
+# imports and prepends the date the picture was taken to the filename.
+
+# Standard safety options
+set -euf -o pipefail
+IFS=$'\n\t'
+
+sortphotos --rename %Y-%m-%d $@
