@@ -444,7 +444,7 @@ def main():
     parser.add_argument('-c', '--copy', action='store_true', help='copy files instead of move')
     parser.add_argument('-s', '--silent', action='store_true', help='don\'t display parsing details.')
     parser.add_argument('-t', '--test', action='store_true', help='run a test.  files will not be moved/copied\ninstead you will just a list of would happen')
-    parser.add_argument('--sort', type=str, default='%Y/%m-%b',
+    parser.add_argument('--sort', type=str, default='%Y/%Y-%m',
                         help="choose destination folder structure using datetime format \n\
     https://docs.python.org/2/library/datetime.html#strftime-and-strptime-behavior. \n\
     Use forward slashes / to indicate subdirectory(ies) (independent of your OS convention). \n\
