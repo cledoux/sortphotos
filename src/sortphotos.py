@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # encoding: utf-8
 """
 sortphotos.py
@@ -359,7 +359,9 @@ def sortPhotos(src_dir, dest_dir, sort_format, rename_format, recursive=False,
 
         if rename_format is not None:
             _, ext = os.path.splitext(filename)
-            filename = date.strftime(rename_format) + ext
+            # CAL - I prefer to keep the original filename intact.
+            filename = date.strftime(rename_format) + '-' + filename
+            #filename = date.strftime(rename_format) + ext
 
         # setup destination file
         dest_file = os.path.join(dest_file, filename)
