@@ -21,7 +21,10 @@ except:
 import filecmp
 from datetime import datetime, timedelta
 import re
+import locale
 
+# Setting locale to the 'local' value
+locale.setlocale(locale.LC_ALL, '')
 
 exiftool_location = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Image-ExifTool', 'exiftool')
 
@@ -62,7 +65,7 @@ def parse_date_exif(date_string):
 
     if len(elements) > 1:
         time_entries = re.split('(\+|-|Z)', elements[1])  # ['HH:MM:SS', '+', 'HH:MM']
-        time = time_entries[0].rstrip(':').split(':')  # ['HH', 'MM', 'SS']  rstrip is there to handle malformed tag with a colon at the end
+        time = time_entries[0].split(':')  # ['HH', 'MM', 'SS']
 
         if len(time) == 3:
             hour = int(time[0])
@@ -142,7 +145,11 @@ def get_oldest_timestamp(data, additional_groups_to_ignore, additional_tags_to_i
             if isinstance(date, list):
                 date = date[0]
 
-            exifdate = parse_date_exif(date)
+            try:
+                exifdate = parse_date_exif(date)  # check for poor-formed exif data, but allow continuation
+            except Exception as e:
+                exifdate = None
+
             if exifdate and exifdate < oldest_date:
                 date_available = True
                 oldest_date = exifdate
@@ -188,20 +195,20 @@ class ExifTool(object):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.process.stdin.write("-stay_open\nFalse\n")
+        self.process.stdin.write(b'-stay_open\nFalse\n')
         self.process.stdin.flush()
 
     def execute(self, *args):
         args = args + ("-execute\n",)
-        self.process.stdin.write(str.join("\n", args))
+        self.process.stdin.write(str.join("\n", args).encode('utf-8'))
         self.process.stdin.flush()
         output = ""
         fd = self.process.stdout.fileno()
         while not output.rstrip(' \t\n\r').endswith(self.sentinel):
             increment = os.read(fd, 4096)
             if self.verbose:
-                sys.stdout.write(increment)
-            output += increment
+                sys.stdout.write(increment.decode('utf-8'))
+            output += increment.decode('utf-8')
         return output.rstrip(' \t\n\r')[:-len(self.sentinel)]
 
     def get_metadata(self, *args):
@@ -309,6 +316,9 @@ def sortPhotos(src_dir, dest_dir, sort_format, rename_format, recursive=False,
         # extract timestamp date for photo
         src_file, date, keys = get_oldest_timestamp(data, additional_groups_to_ignore, additional_tags_to_ignore)
 
+        # fixes further errors when using unicode characters like "\u20AC"
+        src_file.encode('utf-8')
+
         if verbose:
         # write out which photo we are at
             ending = ']'
@@ -364,7 +374,7 @@ def sortPhotos(src_dir, dest_dir, sort_format, rename_format, recursive=False,
             #filename = date.strftime(rename_format) + ext
 
         # setup destination file
-        dest_file = os.path.join(dest_file, filename)
+        dest_file = os.path.join(dest_file, filename.encode('utf-8'))
         root, ext = os.path.splitext(dest_file)
 
         if verbose:
@@ -390,11 +400,7 @@ def sortPhotos(src_dir, dest_dir, sort_format, rename_format, recursive=False,
                 if remove_duplicates and filecmp.cmp(src_file, dest_compare):  # check for identical files
                     fileIsIdentical = True
                     if verbose:
-                        if copy_files:
-                            print('Identical file already exists.  Duplicate will be ignored.\n')
-                            # sys.stdout.flush()
-                        else:
-                            print('Identical file already exists.  Duplicate will be overwritten.')
+                        print('Identical file already exists.  Duplicate will be ignored.\n')
                     break
 
                 else:  # name is same, but file is different
@@ -413,13 +419,13 @@ def sortPhotos(src_dir, dest_dir, sort_format, rename_format, recursive=False,
 
         else:
 
-            if copy_files:
-                if fileIsIdentical:
-                    continue  # if file is same, we just ignore it (for copy option)
-                else:
-                    shutil.copy2(src_file, dest_file)
+            if fileIsIdentical:
+                continue  # ignore identical files
             else:
-                shutil.move(src_file, dest_file)
+                if copy_files:
+                    shutil.copy2(src_file, dest_file)
+                else:
+                    shutil.move(src_file, dest_file)
 
 
 
